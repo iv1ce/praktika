@@ -60,7 +60,10 @@ async function handleAuth(e) {
         if (mode === 'register') {
             const email = document.getElementById('auth-email').value;
             await request('POST', '/auth/register', { username, email, password });
-            mode = 'login';
+            errorEl.textContent = 'Registration successful! Please login.';
+            errorEl.className = 'success';
+            toggleAuth();
+            return;
         }
         const data = await request('POST', '/auth/login', { username, password });
         token = data.access_token;
@@ -68,6 +71,7 @@ async function handleAuth(e) {
         await loadApp();
     } catch (err) {
         errorEl.textContent = err.message;
+        errorEl.className = 'error';
     }
 }
 

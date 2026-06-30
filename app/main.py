@@ -27,6 +27,7 @@ app = FastAPI(
     description="Защищённая веб-платформа с REST API и ролевой моделью доступа",
     version="1.0.0",
     lifespan=lifespan,
+    redirect_slashes=False,
 )
 
 app.state.limiter = limiter
@@ -38,15 +39,15 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(tasks.router)
 
-templates = Jinja2Templates(directory=BASE_DIR / "app" / "templates")
+templates = Jinja2Templates(directory=str(BASE_DIR / "app" / "templates"))
 app.mount("/static", StaticFiles(directory=BASE_DIR / "app" / "static"), name="static")
 
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)

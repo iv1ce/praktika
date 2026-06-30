@@ -10,14 +10,14 @@ from app.middleware.security import get_current_user, require_admin
 router = APIRouter(prefix="/api/tasks", tags=["tasks"])
 
 
-@router.get("/", response_model=list[TaskResponse])
+@router.get("", response_model=list[TaskResponse])
 def list_tasks(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if current_user.role == "admin":
         return db.query(Task).all()
     return db.query(Task).filter(Task.owner_id == current_user.id).all()
 
 
-@router.post("/", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
 def create_task(payload: TaskCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     task = Task(
         title=payload.title,
