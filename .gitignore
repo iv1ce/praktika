@@ -16,3 +16,9 @@ venv/
 *~
 .DS_Store
 Thumbs.db
+
+# Project
+praktika.db
+.env
+audit.log
+*.log
