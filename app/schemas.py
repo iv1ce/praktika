@@ -34,6 +34,7 @@ class UserResponse(BaseModel):
     email: str
     role: str
     is_active: bool
+    last_login: datetime | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -56,6 +57,7 @@ class TaskResponse(BaseModel):
     description: str
     completed: bool
     owner_id: int
+    owner_name: str | None = None
     created_at: datetime
     updated_at: datetime
 
