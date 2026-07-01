@@ -11,13 +11,24 @@ from app.services.auth import hash_password, verify_password
 router = APIRouter(prefix="/api/users", tags=["users"])
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    summary="Профиль текущего пользователя",
+    response_description="Данные авторизованного пользователя",
+)
 @limiter.limit("60/minute")
 def get_me(request: Request, current_user: User = Depends(get_current_user)):
+    """Возвращает информацию о текущем пользователе: логин, почта, роль, статус, last_login."""
     return current_user
 
 
-@router.put("/me", response_model=UserResponse)
+@router.put(
+    "/me",
+    response_model=UserResponse,
+    summary="Обновить профиль",
+    response_description="Обновлённые данные пользователя",
+)
 @limiter.limit("10/minute")
 def update_me(
     request: Request,
@@ -42,13 +53,24 @@ def update_me(
     return current_user
 
 
-@router.get("", response_model=list[UserResponse])
+@router.get(
+    "",
+    response_model=list[UserResponse],
+    summary="Список пользователей (admin)",
+    response_description="Массив всех зарегистрированных пользователей",
+)
 @limiter.limit("30/minute")
 def list_users(request: Request, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    """Только для admin. Возвращает всех пользователей с id, логином, почтой, ролью и статусом."""
     return db.query(User).all()
 
 
-@router.patch("/{user_id}/status", response_model=UserResponse)
+@router.patch(
+    "/{user_id}/status",
+    response_model=UserResponse,
+    summary="Блокировка / разблокировка (admin)",
+    response_description="Обновлённые данные пользователя",
+)
 @limiter.limit("30/minute")
 def toggle_user_status(
     request: Request,
@@ -69,7 +91,12 @@ def toggle_user_status(
     return user
 
 
-@router.patch("/{user_id}/role", response_model=UserResponse)
+@router.patch(
+    "/{user_id}/role",
+    response_model=UserResponse,
+    summary="Смена роли (admin)",
+    response_description="Обновлённые данные пользователя",
+)
 @limiter.limit("30/minute")
 def change_user_role(
     request: Request,
@@ -91,7 +118,12 @@ def change_user_role(
     return user
 
 
-@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Удалить пользователя (admin)",
+    response_description="Пользователь удалён, тело ответа пустое",
+)
 @limiter.limit("30/minute")
 def delete_user(request: Request, user_id: int, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
     user = db.query(User).filter(User.id == user_id).first()

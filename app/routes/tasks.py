@@ -13,9 +13,15 @@ from app.middleware.security import get_current_user, require_admin
 router = APIRouter(prefix="/api/tasks", tags=["tasks"])
 
 
-@router.get("", response_model=list[TaskResponse])
+@router.get(
+    "",
+    response_model=list[TaskResponse],
+    summary="Список задач",
+    response_description="Массив задач пользователя (для admin — все задачи)",
+)
 @limiter.limit("60/minute")
 def list_tasks(request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Получение всех задач. User видит только свои, admin — все. Сортировка: новые сверху."""
     rows = (
         db.query(Task.id, Task.title, Task.description, Task.completed,
                  Task.owner_id, User.username, Task.created_at, Task.updated_at)
@@ -39,9 +45,16 @@ def list_tasks(request: Request, db: Session = Depends(get_db), current_user: Us
     ]
 
 
-@router.post("", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=TaskResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Создать задачу",
+    response_description="Созданная задача с id и таймстемпами",
+)
 @limiter.limit("30/minute")
 def create_task(request: Request, payload: TaskCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Создание новой задачи. title обязателен, description опционален (по умолчанию пустая строка)."""
     task = Task(
         title=payload.title,
         description=payload.description,
@@ -62,9 +75,15 @@ def create_task(request: Request, payload: TaskCreate, db: Session = Depends(get
     }
 
 
-@router.get("/{task_id}", response_model=TaskResponse)
+@router.get(
+    "/{task_id}",
+    response_model=TaskResponse,
+    summary="Получить задачу по ID",
+    response_description="Данные задачи",
+)
 @limiter.limit("60/minute")
 def get_task(request: Request, task_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Просмотр конкретной задачи. User видит только свою, admin — любую."""
     row = (
         db.query(Task.id, Task.title, Task.description, Task.completed,
                  Task.owner_id, User.username, Task.created_at, Task.updated_at)
@@ -88,9 +107,15 @@ def get_task(request: Request, task_id: int, db: Session = Depends(get_db), curr
     }
 
 
-@router.put("/{task_id}", response_model=TaskResponse)
+@router.put(
+    "/{task_id}",
+    response_model=TaskResponse,
+    summary="Редактировать задачу",
+    response_description="Обновлённые данные задачи",
+)
 @limiter.limit("30/minute")
 def update_task(request: Request, task_id: int, payload: TaskUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Изменение названия, описания или статуса задачи. Передаются только те поля, которые нужно изменить."""
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
@@ -119,9 +144,15 @@ def update_task(request: Request, task_id: int, payload: TaskUpdate, db: Session
     }
 
 
-@router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{task_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Удалить задачу",
+    response_description="Задача удалена, тело ответа пустое",
+)
 @limiter.limit("30/minute")
 def delete_task(request: Request, task_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Удаление задачи. User удаляет только свою, admin — любую."""
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")

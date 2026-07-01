@@ -12,9 +12,16 @@ from app.services.auth import hash_password, verify_password, create_access_toke
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Регистрация нового пользователя",
+    response_description="Данные созданного пользователя",
+)
 @limiter.limit("10/minute")
 def register(request: Request, payload: UserCreate, db: Session = Depends(get_db)):
+    """Создание нового аккаунта. Логин от 3 до 50 символов (буквы, цифры, _), пароль минимум 8 символов."""
     if db.query(User).filter(User.username == payload.username).first():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken")
     if db.query(User).filter(User.email == payload.email).first():
@@ -31,9 +38,15 @@ def register(request: Request, payload: UserCreate, db: Session = Depends(get_db
     return user
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    summary="Вход в систему",
+    response_description="JWT токен для авторизации",
+)
 @limiter.limit("20/minute")
 def login(request: Request, payload: UserLogin, db: Session = Depends(get_db)):
+    """Аутентификация по логину и паролю. Возвращает Bearer-токен (действителен 60 минут)."""
     user = db.query(User).filter(User.username == payload.username).first()
     if not user or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
