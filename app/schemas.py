@@ -62,6 +62,20 @@ class TaskResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class UserUpdate(BaseModel):
+    email: EmailStr | None = None
+    old_password: str | None = None
+    new_password: str | None = None
+
+
+class UserStatusUpdate(BaseModel):
+    is_active: bool
+
+
+class UserRoleUpdate(BaseModel):
+    role: str
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
