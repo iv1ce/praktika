@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.limiter import limiter
 from app.models.user import User
 from app.models.task import Task
 from app.schemas import TaskCreate, TaskUpdate, TaskResponse
@@ -11,14 +12,16 @@ router = APIRouter(prefix="/api/tasks", tags=["tasks"])
 
 
 @router.get("", response_model=list[TaskResponse])
-def list_tasks(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@limiter.limit("60/minute")
+def list_tasks(request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if current_user.role == "admin":
         return db.query(Task).all()
     return db.query(Task).filter(Task.owner_id == current_user.id).all()
 
 
 @router.post("", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
-def create_task(payload: TaskCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@limiter.limit("30/minute")
+def create_task(request: Request, payload: TaskCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     task = Task(
         title=payload.title,
         description=payload.description,
@@ -31,7 +34,8 @@ def create_task(payload: TaskCreate, db: Session = Depends(get_db), current_user
 
 
 @router.get("/{task_id}", response_model=TaskResponse)
-def get_task(task_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@limiter.limit("60/minute")
+def get_task(request: Request, task_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
@@ -41,7 +45,8 @@ def get_task(task_id: int, db: Session = Depends(get_db), current_user: User = D
 
 
 @router.put("/{task_id}", response_model=TaskResponse)
-def update_task(task_id: int, payload: TaskUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@limiter.limit("30/minute")
+def update_task(request: Request, task_id: int, payload: TaskUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
@@ -61,7 +66,8 @@ def update_task(task_id: int, payload: TaskUpdate, db: Session = Depends(get_db)
 
 
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_task(task_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@limiter.limit("30/minute")
+def delete_task(request: Request, task_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
