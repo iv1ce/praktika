@@ -13,27 +13,68 @@ python -m app.main          # http://127.0.0.1:8000
 
 ## Структура
 - `app/config.py` — настройки (БД, SECRET_KEY, JWT). Если указан `DB_HOST` — PostgreSQL, иначе SQLite
-- `app/database.py` — engine/session, `get_db`
+- `app/database.py` — engine/session, `get_db` (rollback при ошибках)
+- `app/limiter.py` — общий Limiter для rate limiting
 - `app/models/` — User, Task
 - `app/schemas.py` — Pydantic схемы
-- `app/services/auth.py` — хэширование, создание/декодинг JWT
+- `app/services/auth.py` — хэширование (bcrypt), создание/декодинг JWT
 - `app/middleware/security.py` — `get_current_user`, `require_admin`
-- `app/middleware/audit.py` — логгирование запросов в audit.log
+- `app/middleware/audit.py` — аудит в audit.log (USER, IP, METHOD, PATH, STATUS)
 - `app/routes/auth.py` — регистрация, логин
-- `app/routes/users.py` — /me, список, удаление (admin)
-- `app/routes/tasks.py` — CRUD задач (user видит только свои, admin — все)
+- `app/routes/users.py` — CRUD пользователей + админ-функции
+- `app/routes/tasks.py` — CRUD задач (user видит свои, admin — все)
+- `app/templates/index.html` — фронтенд
+- `app/static/app.js` — клиентская логика
+- `app/static/style.css` — стили
 
 ## Что сделано
-- [x] Регистрация + сообщение об успехе → переход на логин
-- [x] Аутентификация по JWT (sub теперь string)
-- [x] RBAC (user/admin)
+
+### Основные функции
+- [x] Регистрация + логин по JWT (проверка is_active при входе)
+- [x] RBAC (user/admin): user — свои задачи, admin — все + управление пользователями
 - [x] CRUD задач (API + фронтенд)
-- [x] Аудит (audit.log), Rate limiting
-- [x] Починены: Jinja2+Starlette несовместимость, passlib+bcrypt, JWT sub тип, редиректы слешей
+- [x] CRUD пользователей (admin): список, удаление, блокировка, смена роли
+- [x] Обновление профиля (email, пароль с подтверждением старого)
+
+### Безопасность
+- [x] Пароли bcrypt (passlib)
+- [x] JWT-токены с expiry
+- [x] Rate limiting (SlowAPI) на каждый эндпоинт
+- [x] Аудит запросов в audit.log (USER, IP, METHOD, PATH, STATUS)
+- [x] Global exception handler (500 → JSON, лог ошибки)
+- [x] Rollback БД при ошибках
+- [x] Защита от SQL-инъекций (SQLAlchemy ORM)
+- [x] Защита от XSS (экранирование на фронтенде)
+
+### Инфраструктура
 - [x] PostgreSQL/SQLite переключение через DB_HOST в .env
-- [ ] Документация API
+- [x] База на PostgreSQL (pgAdmin)
+- [x] REST API с JSON
+- [x] Авто-документация Swagger (/docs) + ReDoc (/redoc)
+- [x] Кнопка API Docs в навигации на сайте
+
+### Прочее
+- [x] Удалён мусор (src/main.py, __pycache__)
+- [ ] Документация API (описание в Swagger)
 - [ ] Руководство пользователя
 - [ ] Тесты
+
+## Rate limits
+| Эндпоинт | Лимит |
+|----------|-------|
+| POST /api/auth/register | 10/min |
+| POST /api/auth/login | 20/min |
+| GET /api/users/me | 60/min |
+| PUT /api/users/me | 10/min |
+| GET /api/users | 30/min |
+| PATCH /api/users/*/status | 30/min |
+| PATCH /api/users/*/role | 30/min |
+| DELETE /api/users/* | 30/min |
+| GET /api/tasks | 60/min |
+| POST /api/tasks | 30/min |
+| GET /api/tasks/* | 60/min |
+| PUT /api/tasks/* | 30/min |
+| DELETE /api/tasks/* | 30/min |
 
 ## Зависимости
 `pip install -r requirements.txt`
@@ -43,7 +84,7 @@ python -m app.main          # http://127.0.0.1:8000
 DB_HOST=localhost    # если не указан — SQLite
 DB_PORT=5432
 DB_USER=postgres
-DB_PASSWORD=pass
+DB_PASSWORD=
 DB_NAME=praktika
 SECRET_KEY=...
 ```
