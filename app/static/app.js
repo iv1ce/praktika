@@ -6,6 +6,7 @@ let lang = localStorage.getItem('lang') || 'ru';
 const i18n = {
   ru: {
     'nav.tasks': 'Задачи',
+    'nav.profile': 'Профиль',
     'nav.admin': 'Админ',
     'nav.api': 'API Docs',
     'nav.logout': 'Выйти',
@@ -29,6 +30,9 @@ const i18n = {
     'tasks.done': 'Готово',
     'tasks.undo': 'Отменить',
     'tasks.delete': 'Удалить',
+    'tasks.edit': 'Редактировать',
+    'tasks.save': 'Сохранить',
+    'tasks.cancel': 'Отмена',
     'profile.title': 'Настройки профиля',
     'profile.email': 'Новая почта (оставьте пустым, если не меняете)',
     'profile.old_pw': 'Текущий пароль',
@@ -46,6 +50,7 @@ const i18n = {
     'admin.actions': 'Действия',
     'admin.active': 'Активен',
     'admin.blocked': 'Заблокирован',
+    'admin.never': 'Не заходил',
     'admin.block': 'Заблокировать',
     'admin.unblock': 'Разблокировать',
     'admin.delete': 'Удалить',
@@ -53,6 +58,7 @@ const i18n = {
   },
   en: {
     'nav.tasks': 'Tasks',
+    'nav.profile': 'Profile',
     'nav.admin': 'Admin',
     'nav.api': 'API Docs',
     'nav.logout': 'Logout',
@@ -76,6 +82,9 @@ const i18n = {
     'tasks.done': 'Done',
     'tasks.undo': 'Undo',
     'tasks.delete': 'Delete',
+    'tasks.edit': 'Edit',
+    'tasks.save': 'Save',
+    'tasks.cancel': 'Cancel',
     'profile.title': 'Profile Settings',
     'profile.email': 'New email (leave blank to keep)',
     'profile.old_pw': 'Current password',
@@ -93,6 +102,7 @@ const i18n = {
     'admin.actions': 'Actions',
     'admin.active': 'Active',
     'admin.blocked': 'Blocked',
+    'admin.never': 'Never logged in',
     'admin.block': 'Block',
     'admin.unblock': 'Unblock',
     'admin.delete': 'Delete',
@@ -114,6 +124,7 @@ function applyLang() {
   document.getElementById('nav-lang').textContent = t('nav.lang');
   if (token) {
     document.getElementById('nav-tasks').textContent = t('nav.tasks');
+    document.getElementById('nav-profile').textContent = t('nav.profile');
     document.getElementById('nav-admin').textContent = t('nav.admin');
     document.getElementById('nav-api').textContent = t('nav.api');
     document.getElementById('nav-logout').textContent = t('nav.logout');
@@ -123,28 +134,21 @@ function applyLang() {
   document.getElementById('task-title').placeholder = t('tasks.title_ph');
   document.getElementById('task-desc').placeholder = t('tasks.desc_ph');
   document.querySelector('#task-form button').textContent = t('tasks.add');
-  document.querySelector('#profile-form h2').textContent = t('profile.title');
-  document.getElementById('profile-email').placeholder = t('profile.email');
-  document.getElementById('profile-old-pw').placeholder = t('profile.old_pw');
-  document.getElementById('profile-new-pw').placeholder = t('profile.new_pw');
-  document.querySelector('#profile-form button').textContent = t('profile.save');
+
   document.querySelector('#page-admin > h2').textContent = t('admin.title');
   updateAdminTableHeaders();
-  if (currentUser) {
-    loadTasks();
-    loadAdmin();
-  }
 }
 
 function updateAdminTableHeaders() {
   const ths = document.querySelectorAll('#admin-table thead th');
-  if (ths.length >= 6) {
+  if (ths.length >= 7) {
     ths[0].textContent = t('admin.id');
     ths[1].textContent = t('admin.username');
     ths[2].textContent = t('admin.email');
     ths[3].textContent = t('admin.role');
-    ths[4].textContent = t('admin.status');
-    ths[5].textContent = t('admin.actions');
+    ths[4].textContent = 'Вход';
+    ths[5].textContent = t('admin.status');
+    ths[6].textContent = t('admin.actions');
   }
 }
 
@@ -188,6 +192,25 @@ async function request(method, path, body) {
 function showPage(name) {
   document.querySelectorAll('main > section').forEach(s => s.style.display = 'none');
   document.getElementById(`page-${name}`).style.display = 'block';
+}
+
+function showTasks() {
+  showPage('tasks');
+  loadTasks();
+}
+
+function showAdmin() {
+  showPage('admin');
+  loadAdmin();
+}
+
+function showProfile() {
+  showPage('profile');
+  document.querySelector('#page-profile h2').textContent = t('profile.title');
+  document.getElementById('profile-email').placeholder = t('profile.email');
+  document.getElementById('profile-old-pw').placeholder = t('profile.old_pw');
+  document.getElementById('profile-new-pw').placeholder = t('profile.new_pw');
+  document.querySelector('#profile-form button').textContent = t('profile.save');
 }
 
 function toggleAuth() {
@@ -235,6 +258,7 @@ async function handleAuth(e) {
 async function loadApp() {
   document.getElementById('page-auth').style.display = 'none';
   document.getElementById('nav-tasks').style.display = 'inline';
+  document.getElementById('nav-profile').style.display = 'inline';
   document.getElementById('nav-api').style.display = 'inline';
   document.getElementById('nav-logout').style.display = 'inline';
   applyLang();
@@ -243,37 +267,84 @@ async function loadApp() {
   if (currentUser.role === 'admin') {
     document.getElementById('nav-admin').style.display = 'inline';
   }
-  showPage('tasks');
-  loadTasks();
+  showTasks();
   loadAdmin();
 }
 
 function loadTasks() {
+  const list = document.getElementById('task-list');
   request('GET', '/tasks').then(tasks => {
-    const list = document.getElementById('task-list');
-    list.innerHTML = tasks.map(t => `
-      <li class="${t.completed ? 'completed' : ''}">
+    list.innerHTML = tasks.map(task => `
+      <li id="task-${task.id}" class="${task.completed ? 'completed' : ''}">
         <div class="task-info">
-          <strong>${escapeHtml(t.title)}</strong>
-          <span>${escapeHtml(t.description)}</span>
+          <strong>${escapeHtml(task.title)}</strong>
+          <span>${escapeHtml(task.description)}</span>
+          ${currentUser && currentUser.role === 'admin' ? `<small class="owner">— ${escapeHtml(task.owner_name)}</small>` : ''}
         </div>
         <div class="task-actions">
-          <button onclick="toggleTask(${t.id}, ${!t.completed})">${t.completed ? t('tasks.undo') : t('tasks.done')}</button>
-          <button class="delete" onclick="deleteTask(${t.id})">${t('tasks.delete')}</button>
+          <button onclick="toggleTask(${task.id}, ${!task.completed})">${task.completed ? t('tasks.undo') : t('tasks.done')}</button>
+          <button onclick="editTask(${task.id})">${t('tasks.edit')}</button>
+          <button class="delete" onclick="deleteTask(${task.id})">${t('tasks.delete')}</button>
         </div>
       </li>
     `).join('');
-  }).catch(() => {});
+  }).catch(err => {
+    list.innerHTML = `<li class="error" style="text-align:center;padding:1rem">${escapeHtml(err.message)}</li>`;
+  });
+}
+
+function editTask(id) {
+  const li = document.getElementById(`task-${id}`);
+  const info = li.querySelector('.task-info');
+  const title = info.querySelector('strong').textContent;
+  const desc = info.querySelector('span').textContent;
+  li.innerHTML = `
+    <div class="task-info">
+      <input type="text" id="edit-title-${id}" value="${escapeHtml(title)}" placeholder="${t('tasks.title_ph')}">
+      <input type="text" id="edit-desc-${id}" value="${escapeHtml(desc)}" placeholder="${t('tasks.desc_ph')}">
+    </div>
+    <div class="task-actions">
+      <button onclick="saveTask(${id})">${t('tasks.save')}</button>
+      <button onclick="loadTasks()">${t('tasks.cancel')}</button>
+    </div>
+  `;
+}
+
+async function saveTask(id) {
+  const title = document.getElementById(`edit-title-${id}`).value;
+  const desc = document.getElementById(`edit-desc-${id}`).value;
+  try {
+    await request('PUT', `/tasks/${id}`, { title, description: desc });
+    loadTasks();
+  } catch (err) {
+    const li = document.getElementById(`task-${id}`);
+    const actions = li.querySelector('.task-actions');
+    const errEl = document.createElement('p');
+    errEl.className = 'error';
+    errEl.textContent = err.message;
+    actions.after(errEl);
+  }
 }
 
 async function handleTaskSubmit(e) {
   e.preventDefault();
+  const btn = document.querySelector('#task-form button');
   const title = document.getElementById('task-title').value;
   const desc = document.getElementById('task-desc').value;
-  await request('POST', '/tasks', { title, description: desc });
-  document.getElementById('task-title').value = '';
-  document.getElementById('task-desc').value = '';
-  loadTasks();
+  const errorEl = document.getElementById('task-error');
+  errorEl.textContent = '';
+  btn.classList.add('loading');
+  try {
+    await request('POST', '/tasks', { title, description: desc });
+    document.getElementById('task-title').value = '';
+    document.getElementById('task-desc').value = '';
+    loadTasks();
+  } catch (err) {
+    errorEl.textContent = err.message;
+    errorEl.className = 'error';
+  } finally {
+    btn.classList.remove('loading');
+  }
 }
 
 async function toggleTask(id, completed) {
@@ -288,8 +359,8 @@ async function deleteTask(id) {
 
 function loadAdmin() {
   if (!currentUser || currentUser.role !== 'admin') return;
+  const body = document.getElementById('admin-body');
   request('GET', '/users').then(users => {
-    const body = document.getElementById('admin-body');
     body.innerHTML = users.map(u => `
       <tr>
         <td>${u.id}</td>
@@ -301,6 +372,7 @@ function loadAdmin() {
             <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>admin</option>
           </select>
         </td>
+        <td>${u.last_login ? new Date(u.last_login).toLocaleString() : t('admin.never')}</td>
         <td>${u.is_active ? t('admin.active') : t('admin.blocked')}</td>
         <td>
           <button onclick="toggleUserStatus(${u.id}, ${!u.is_active})" ${u.id === currentUser.id ? 'disabled' : ''}>
@@ -310,7 +382,9 @@ function loadAdmin() {
         </td>
       </tr>
     `).join('');
-  }).catch(() => {});
+  }).catch(err => {
+    body.innerHTML = `<tr><td colspan="6" class="error" style="text-align:center">${escapeHtml(err.message)}</td></tr>`;
+  });
 }
 
 async function deleteUser(id) {
@@ -374,6 +448,7 @@ function logout() {
   document.getElementById('page-tasks').style.display = 'none';
   document.getElementById('page-admin').style.display = 'none';
   document.getElementById('nav-tasks').style.display = 'none';
+  document.getElementById('nav-profile').style.display = 'none';
   document.getElementById('nav-admin').style.display = 'none';
   document.getElementById('nav-api').style.display = 'none';
   document.getElementById('nav-logout').style.display = 'none';

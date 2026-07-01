@@ -4,8 +4,11 @@
   --surface2: #242442;
   --primary: #7c3aed;
   --primary-hover: #6d28d9;
+  --primary-glow: rgba(124, 58, 237, 0.4);
   --accent: #06b6d4;
+  --accent-glow: rgba(6, 182, 212, 0.4);
   --danger: #ef4444;
+  --danger-glow: rgba(239, 68, 68, 0.4);
   --success: #22c55e;
   --text: #e2e8f0;
   --text-muted: #94a3b8;
@@ -15,6 +18,25 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--primary-glow); }
+  50%      { box-shadow: 0 0 0 8px transparent; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -56,12 +78,19 @@ nav button {
   font-size: 0.875rem;
   font-weight: 500;
   transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
 }
 
 nav button:hover {
   background: var(--surface2);
   color: var(--text);
   border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+nav button:active {
+  transform: translateY(0) scale(0.97);
 }
 
 nav button:last-child {
@@ -71,6 +100,9 @@ nav button:last-child {
 nav button:last-child:hover {
   background: rgba(239, 68, 68, 0.1);
   border-color: var(--danger);
+}
+nav button:last-child:active {
+  transform: scale(0.97);
 }
 
 main {
@@ -123,10 +155,20 @@ main {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
 }
 
-.auth-form button:hover { background: var(--primary-hover); }
+.auth-form button:hover {
+  background: var(--primary-hover);
+  box-shadow: 0 0 20px var(--primary-glow);
+  transform: translateY(-1px);
+}
+
+.auth-form button:active {
+  transform: translateY(0) scale(0.98);
+}
 
 .auth-form p { margin-top: 1rem; text-align: center; }
 
@@ -177,11 +219,38 @@ main {
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
   white-space: nowrap;
+  position: relative;
+  overflow: hidden;
 }
 
-#task-form button:hover { background: var(--primary-hover); }
+#task-form button:hover {
+  background: var(--primary-hover);
+  box-shadow: 0 0 20px var(--primary-glow);
+  transform: translateY(-1px);
+}
+
+#task-form button:active {
+  transform: translateY(0) scale(0.97);
+}
+
+#task-form button.loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+#task-form button.loading::after {
+  content: '';
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-left: 0.5rem;
+  border: 2px solid transparent;
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+}
 
 #task-list { list-style: none; }
 
@@ -194,14 +263,24 @@ main {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: border-color 0.2s;
+  animation: fadeSlideIn 0.3s ease both;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
-#task-list li:hover { border-color: var(--primary); }
+#task-list li:hover {
+  border-color: var(--primary);
+  transform: translateX(3px);
+  box-shadow: 0 2px 12px rgba(124, 58, 237, 0.15);
+}
+
+#task-list li:active {
+  transform: translateX(0);
+}
 
 #task-list li .task-info { flex: 1; }
 #task-list li .task-info strong { display: block; font-size: 1rem; margin-bottom: 0.25rem; }
 #task-list li .task-info span { color: var(--text-muted); font-size: 0.85rem; }
+#task-list li .task-info .owner { color: var(--accent); font-size: 0.8rem; display: inline-block; margin-left: 0.5rem; }
 
 #task-list li .task-actions { display: flex; gap: 0.5rem; }
 
@@ -214,11 +293,19 @@ main {
   color: var(--text);
   font-size: 0.8rem;
   transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
 }
 
 #task-list li .task-actions button:hover {
   border-color: var(--accent);
   color: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+  transform: translateY(-1px);
+}
+
+#task-list li .task-actions button:active {
+  transform: translateY(0) scale(0.95);
 }
 
 #task-list li .task-actions .delete {
@@ -228,10 +315,24 @@ main {
 #task-list li .task-actions .delete:hover {
   background: rgba(239, 68, 68, 0.1);
   border-color: var(--danger);
+  box-shadow: 0 0 12px var(--danger-glow);
 }
 
 #task-list li.completed { opacity: 0.5; }
 #task-list li.completed .task-info strong { text-decoration: line-through; }
+
+#task-list li .task-info input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: var(--surface2);
+  color: var(--text);
+  outline: none;
+}
+#task-list li .task-info input:focus { border-color: var(--primary); }
 
 /* Profile */
 hr { border: none; border-top: 1px solid var(--border); }
@@ -274,10 +375,20 @@ hr { border: none; border-top: 1px solid var(--border); }
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
 }
 
-#profile-form button:hover { background: var(--primary-hover); }
+#profile-form button:hover {
+  background: var(--primary-hover);
+  box-shadow: 0 0 20px var(--primary-glow);
+  transform: translateY(-1px);
+}
+
+#profile-form button:active {
+  transform: translateY(0) scale(0.98);
+}
 
 /* Admin table */
 #page-admin h2 {
@@ -342,7 +453,13 @@ td button {
   transition: all 0.2s;
 }
 
-td button:hover { border-color: var(--success); }
+td button:hover {
+  border-color: var(--success);
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.3);
+  transform: translateY(-1px);
+}
+
+td button:active { transform: translateY(0) scale(0.95); }
 
 td .delete {
   color: var(--danger);
@@ -352,6 +469,7 @@ td .delete {
 td .delete:hover {
   background: rgba(239, 68, 68, 0.1);
   border-color: var(--danger);
+  box-shadow: 0 0 12px var(--danger-glow);
 }
 
 td button:disabled {

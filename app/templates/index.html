@@ -6,7 +6,7 @@
     <title>Практика ИБС</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/style.css?v=4">
 </head>
 <body>
     <div id="app">
@@ -14,8 +14,9 @@
             <h1>Практика ИБС</h1>
             <nav id="nav">
                 <button onclick="toggleLang()" id="nav-lang">EN</button>
-                <button onclick="showPage('tasks')" id="nav-tasks" style="display:none">Задачи</button>
-                <button onclick="showPage('admin')" id="nav-admin" style="display:none">Админ</button>
+                <button onclick="showTasks()" id="nav-tasks" style="display:none">Задачи</button>
+                <button onclick="showProfile()" id="nav-profile" style="display:none">Профиль</button>
+                <button onclick="showAdmin()" id="nav-admin" style="display:none">Админ</button>
                 <button onclick="window.open('/docs', '_blank')" id="nav-api" style="display:none">API Docs</button>
                 <button onclick="logout()" id="nav-logout" style="display:none">Выйти</button>
             </nav>
@@ -45,12 +46,14 @@
                     <input type="text" id="task-title" placeholder="Название задачи" required>
                     <input type="text" id="task-desc" placeholder="Описание">
                     <button type="submit">Добавить</button>
+                    <p id="task-error" class="error"></p>
                 </form>
                 <ul id="task-list"></ul>
-                <hr style="margin:2rem 0">
+            </section>
+
+            <section id="page-profile" style="display:none">
                 <h2>Настройки профиля</h2>
                 <form id="profile-form" onsubmit="return handleProfileUpdate(event)">
-                    <h2>Настройки профиля</h2>
                     <input type="email" id="profile-email" placeholder="Новая почта (оставьте пустым)">
                     <input type="password" id="profile-old-pw" placeholder="Текущий пароль">
                     <input type="password" id="profile-new-pw" placeholder="Новый пароль (оставьте пустым)">
@@ -62,12 +65,12 @@
             <section id="page-admin" style="display:none">
                 <h2>Панель администратора</h2>
                 <table id="admin-table">
-                    <thead><tr><th>ID</th><th>Логин</th><th>Почта</th><th>Роль</th><th>Статус</th><th>Действия</th></tr></thead>
+                    <thead><tr><th>ID</th><th>Логин</th><th>Почта</th><th>Роль</th><th>Вход</th><th>Статус</th><th>Действия</th></tr></thead>
                     <tbody id="admin-body"></tbody>
                 </table>
             </section>
         </main>
     </div>
-    <script src="/static/app.js"></script>
+    <script src="/static/app.js?v=4"></script>
 </body>
 </html>
