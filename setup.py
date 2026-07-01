@@ -48,20 +48,69 @@ def create_db(host, port, user, password, db_name):
         print(f"[WARN] Не удалось создать БД: {e}")
 
 
+def detect_pg() -> dict | None:
+    """Пробует подключиться с дефолтными параметрами."""
+    defaults = [
+        {"DB_HOST": "localhost", "DB_PORT": "5432", "DB_USER": "postgres", "DB_PASSWORD": "", "DB_NAME": "praktika"},
+        {"DB_HOST": "localhost", "DB_PORT": "5432", "DB_USER": "postgres", "DB_PASSWORD": "postgres", "DB_NAME": "praktika"},
+    ]
+    for cfg in defaults:
+        try:
+            import psycopg2
+            conn = psycopg2.connect(
+                host=cfg["DB_HOST"], port=cfg["DB_PORT"],
+                user=cfg["DB_USER"], password=cfg["DB_PASSWORD"],
+                dbname=cfg["DB_NAME"]
+            )
+            conn.close()
+            return cfg
+        except Exception:
+            try:
+                conn = psycopg2.connect(
+                    host=cfg["DB_HOST"], port=cfg["DB_PORT"],
+                    user=cfg["DB_USER"], password=cfg["DB_PASSWORD"],
+                    dbname="postgres"
+                )
+                conn.close()
+                return cfg
+            except Exception:
+                continue
+    return None
+
+
 def main():
     print("=== Настройка подключения к БД ===\n")
     print("Оставь поля пустыми — будет SQLite (файл praktika.db)\n")
 
-    use_pg = input("Использовать PostgreSQL? (y/N): ").strip().lower()
-
     env = {}
     env["SECRET_KEY"] = secrets.token_urlsafe(32)
 
+    detected = detect_pg()
+    if detected:
+        use_pg = input(f"Найден PostgreSQL на {detected['DB_HOST']}:{detected['DB_PORT']}. Использовать? (Y/n): ").strip().lower()
+        if use_pg != "n":
+            env.update(detected)
+            write_env(env)
+            print("\nСоздаю таблицы...")
+            os.chdir(BASE_DIR)
+            subprocess.check_call(
+                [sys.executable, "-c",
+                 "from app.models import User, Task; "
+                 "from app.database import Base, engine; "
+                 "Base.metadata.create_all(bind=engine); "
+                 "print('[OK] Таблицы созданы')"]
+            )
+            print("\n[OK] Готово! Запускай: python -m app.main")
+            print("   http://127.0.0.1:8000")
+            return
+
+    use_pg = input("Использовать PostgreSQL? (y/N): ").strip().lower()
+
     if use_pg == "y":
-        env["DB_HOST"] = prompt("Хост", "localhost")
+        env["DB_HOST"] = prompt("Хост (если не знаешь — localhost)", "localhost")
         env["DB_PORT"] = prompt("Порт", "5432")
         env["DB_USER"] = prompt("Пользователь", "postgres")
-        env["DB_PASSWORD"] = prompt("Пароль", "")
+        env["DB_PASSWORD"] = prompt("Пароль (если нет — просто Enter)", "")
         env["DB_NAME"] = prompt("Имя БД", "praktika")
 
         write_env(env)
