@@ -13,6 +13,7 @@
             <nav id="nav">
                 <button onclick="showPage('tasks')" id="nav-tasks" style="display:none">Tasks</button>
                 <button onclick="showPage('admin')" id="nav-admin" style="display:none">Admin</button>
+                <button onclick="window.open('/docs', '_blank')" id="nav-api" style="display:none">API Docs</button>
                 <button onclick="logout()" id="nav-logout" style="display:none">Logout</button>
             </nav>
         </header>
@@ -43,12 +44,22 @@
                     <button type="submit">Add Task</button>
                 </form>
                 <ul id="task-list"></ul>
+                <hr style="margin:2rem 0">
+                <h2>Profile Settings</h2>
+                <form id="profile-form" onsubmit="return handleProfileUpdate(event)" class="auth-form" style="margin:1rem 0;max-width:100%">
+                    <h2>Update Profile</h2>
+                    <input type="email" id="profile-email" placeholder="New email (leave blank to keep)">
+                    <input type="password" id="profile-old-pw" placeholder="Current password">
+                    <input type="password" id="profile-new-pw" placeholder="New password (leave blank to keep)">
+                    <button type="submit">Save Changes</button>
+                    <p id="profile-error" class="error"></p>
+                </form>
             </section>
 
             <section id="page-admin" style="display:none">
                 <h2>Admin Panel</h2>
                 <table id="admin-table">
-                    <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead>
+                    <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
                     <tbody id="admin-body"></tbody>
                 </table>
             </section>

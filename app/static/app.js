@@ -78,6 +78,7 @@ async function handleAuth(e) {
 async function loadApp() {
     document.getElementById('page-auth').style.display = 'none';
     document.getElementById('nav-tasks').style.display = 'inline';
+    document.getElementById('nav-api').style.display = 'inline';
     document.getElementById('nav-logout').style.display = 'inline';
 
     currentUser = await request('GET', '/users/me');
@@ -136,8 +137,19 @@ async function loadAdmin() {
                 <td>${u.id}</td>
                 <td>${escapeHtml(u.username)}</td>
                 <td>${escapeHtml(u.email)}</td>
-                <td>${u.role}</td>
-                <td><button class="delete" onclick="deleteUser(${u.id})" ${u.id === currentUser.id ? 'disabled' : ''}>Delete</button></td>
+                <td>
+                    <select onchange="changeRole(${u.id}, this.value)" ${u.id === currentUser.id ? 'disabled' : ''}>
+                        <option value="user" ${u.role === 'user' ? 'selected' : ''}>user</option>
+                        <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>admin</option>
+                    </select>
+                </td>
+                <td>${u.is_active ? 'Active' : 'Blocked'}</td>
+                <td>
+                    <button onclick="toggleUserStatus(${u.id}, ${!u.is_active})" ${u.id === currentUser.id ? 'disabled' : ''}>
+                        ${u.is_active ? 'Block' : 'Unblock'}
+                    </button>
+                    <button class="delete" onclick="deleteUser(${u.id})" ${u.id === currentUser.id ? 'disabled' : ''}>Delete</button>
+                </td>
             </tr>
         `).join('');
     } catch (e) {
@@ -151,6 +163,55 @@ async function deleteUser(id) {
     loadAdmin();
 }
 
+async function toggleUserStatus(id, isActive) {
+    await request('PATCH', `/users/${id}/status`, { is_active: isActive });
+    loadAdmin();
+}
+
+async function changeRole(id, role) {
+    await request('PATCH', `/users/${id}/role`, { role });
+    loadAdmin();
+}
+
+async function handleProfileUpdate(e) {
+    e.preventDefault();
+    const email = document.getElementById('profile-email').value;
+    const oldPassword = document.getElementById('profile-old-pw').value;
+    const newPassword = document.getElementById('profile-new-pw').value;
+    const errorEl = document.getElementById('profile-error');
+    errorEl.textContent = '';
+
+    const body = {};
+    if (email) body.email = email;
+    if (oldPassword && newPassword) {
+        body.old_password = oldPassword;
+        body.new_password = newPassword;
+    } else if (newPassword && !oldPassword) {
+        errorEl.textContent = 'Enter current password to set a new one';
+        errorEl.className = 'error';
+        return;
+    }
+
+    if (Object.keys(body).length === 0) {
+        errorEl.textContent = 'Nothing to update';
+        errorEl.className = 'error';
+        return;
+    }
+
+    try {
+        await request('PUT', '/users/me', body);
+        currentUser = await request('GET', '/users/me');
+        errorEl.textContent = 'Profile updated!';
+        errorEl.className = 'success';
+        document.getElementById('profile-email').value = '';
+        document.getElementById('profile-old-pw').value = '';
+        document.getElementById('profile-new-pw').value = '';
+    } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.className = 'error';
+    }
+}
+
 function logout() {
     token = null;
     localStorage.removeItem('token');
@@ -158,6 +219,7 @@ function logout() {
     document.getElementById('page-admin').style.display = 'none';
     document.getElementById('nav-tasks').style.display = 'none';
     document.getElementById('nav-admin').style.display = 'none';
+    document.getElementById('nav-api').style.display = 'none';
     document.getElementById('nav-logout').style.display = 'none';
     document.getElementById('page-auth').style.display = 'block';
 }
