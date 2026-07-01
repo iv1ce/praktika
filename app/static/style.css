@@ -1,30 +1,360 @@
+:root {
+  --bg: #0f0f1a;
+  --surface: #1a1a2e;
+  --surface2: #242442;
+  --primary: #7c3aed;
+  --primary-hover: #6d28d9;
+  --accent: #06b6d4;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --border: #2d2d4f;
+  --radius: 12px;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
-header { background: #1a1a2e; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-header h1 { font-size: 1.5rem; }
-nav button { background: #16213e; color: white; border: 1px solid #0f3460; padding: 0.5rem 1rem; cursor: pointer; margin-left: 0.5rem; border-radius: 4px; }
-nav button:hover { background: #0f3460; }
-main { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-.auth-form { background: white; max-width: 400px; margin: 4rem auto; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-.auth-form h2 { margin-bottom: 1rem; }
-.auth-form input { width: 100%; padding: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; }
-.auth-form button { width: 100%; padding: 0.75rem; background: #1a1a2e; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
-.auth-form button:hover { background: #0f3460; }
-.error { color: #e74c3c; font-size: 0.9rem; margin-top: 0.5rem; }
-.success { color: #27ae60; font-size: 0.9rem; margin-top: 0.5rem; }
-#page-tasks form { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-#page-tasks input { flex: 1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; }
-#page-tasks button { padding: 0.5rem 1rem; background: #1a1a2e; color: white; border: none; border-radius: 4px; cursor: pointer; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+
+header h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+nav { display: flex; gap: 0.5rem; }
+
+nav button {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+nav button:hover {
+  background: var(--surface2);
+  color: var(--text);
+  border-color: var(--primary);
+}
+
+nav button:last-child {
+  color: var(--danger);
+  border-color: transparent;
+}
+nav button:last-child:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--danger);
+}
+
+main {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+/* Auth */
+.auth-form {
+  background: var(--surface);
+  max-width: 420px;
+  margin: 6rem auto;
+  padding: 2.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.auth-form h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.auth-form input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: var(--surface2);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.auth-form input:focus {
+  border-color: var(--primary);
+}
+
+.auth-form button {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.auth-form button:hover { background: var(--primary-hover); }
+
+.auth-form p { margin-top: 1rem; text-align: center; }
+
+.auth-form a {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.auth-form a:hover { text-decoration: underline; }
+
+.error { color: var(--danger); font-size: 0.875rem; margin-top: 0.5rem; text-align: center; }
+.success { color: var(--success); font-size: 0.875rem; margin-top: 0.5rem; text-align: center; }
+
+/* Tasks page */
+#page-tasks h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+}
+
+#task-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+#task-form input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#task-form input:focus { border-color: var(--primary); }
+
+#task-form button {
+  padding: 0.75rem 1.5rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+#task-form button:hover { background: var(--primary-hover); }
+
 #task-list { list-style: none; }
-#task-list li { background: white; padding: 0.75rem 1rem; margin-bottom: 0.5rem; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+#task-list li {
+  background: var(--surface);
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color 0.2s;
+}
+
+#task-list li:hover { border-color: var(--primary); }
+
 #task-list li .task-info { flex: 1; }
-#task-list li .task-info strong { display: block; }
-#task-list li .task-info span { color: #666; font-size: 0.9rem; }
-#task-list li .task-actions button { margin-left: 0.5rem; padding: 0.25rem 0.5rem; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; background: white; }
-#task-list li .task-actions .delete { color: #e74c3c; border-color: #e74c3c; }
-#task-list li.completed { opacity: 0.6; }
+#task-list li .task-info strong { display: block; font-size: 1rem; margin-bottom: 0.25rem; }
+#task-list li .task-info span { color: var(--text-muted); font-size: 0.85rem; }
+
+#task-list li .task-actions { display: flex; gap: 0.5rem; }
+
+#task-list li .task-actions button {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+#task-list li .task-actions button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+#task-list li .task-actions .delete {
+  color: var(--danger);
+  border-color: transparent;
+}
+#task-list li .task-actions .delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--danger);
+}
+
+#task-list li.completed { opacity: 0.5; }
 #task-list li.completed .task-info strong { text-decoration: line-through; }
-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee; }
-th { background: #1a1a2e; color: white; }
-tr:hover { background: #f9f9f9; }
+
+/* Profile */
+hr { border: none; border-top: 1px solid var(--border); }
+
+#profile-form {
+  background: var(--surface);
+  max-width: 100%;
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+#profile-form h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+#profile-form input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: var(--surface2);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#profile-form input:focus { border-color: var(--primary); }
+
+#profile-form button {
+  padding: 0.75rem 1.5rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#profile-form button:hover { background: var(--primary-hover); }
+
+/* Admin table */
+#page-admin h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+th {
+  background: var(--surface2);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.9rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface2); }
+
+td select {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  outline: none;
+}
+
+td select:focus { border-color: var(--primary); }
+
+td button {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  background: var(--surface2);
+  color: var(--success);
+  font-size: 0.8rem;
+  margin-right: 0.35rem;
+  transition: all 0.2s;
+}
+
+td button:hover { border-color: var(--success); }
+
+td .delete {
+  color: var(--danger);
+  border-color: transparent;
+}
+
+td .delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--danger);
+}
+
+td button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
