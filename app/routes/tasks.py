@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
@@ -14,9 +16,27 @@ router = APIRouter(prefix="/api/tasks", tags=["tasks"])
 @router.get("", response_model=list[TaskResponse])
 @limiter.limit("60/minute")
 def list_tasks(request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    if current_user.role == "admin":
-        return db.query(Task).all()
-    return db.query(Task).filter(Task.owner_id == current_user.id).all()
+    rows = (
+        db.query(Task.id, Task.title, Task.description, Task.completed,
+                 Task.owner_id, User.username, Task.created_at, Task.updated_at)
+        .join(User, Task.owner_id == User.id)
+    )
+    if current_user.role != "admin":
+        rows = rows.filter(Task.owner_id == current_user.id)
+    rows = rows.order_by(Task.updated_at.desc())
+    return [
+        {
+            "id": r.id,
+            "title": r.title,
+            "description": r.description,
+            "completed": r.completed,
+            "owner_id": r.owner_id,
+            "owner_name": r.username,
+            "created_at": r.created_at,
+            "updated_at": r.updated_at,
+        }
+        for r in rows.all()
+    ]
 
 
 @router.post("", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
@@ -30,18 +50,42 @@ def create_task(request: Request, payload: TaskCreate, db: Session = Depends(get
     db.add(task)
     db.commit()
     db.refresh(task)
-    return task
+    return {
+        "id": task.id,
+        "title": task.title,
+        "description": task.description,
+        "completed": task.completed,
+        "owner_id": task.owner_id,
+        "owner_name": current_user.username,
+        "created_at": task.created_at,
+        "updated_at": task.updated_at,
+    }
 
 
 @router.get("/{task_id}", response_model=TaskResponse)
 @limiter.limit("60/minute")
 def get_task(request: Request, task_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    task = db.query(Task).filter(Task.id == task_id).first()
-    if not task:
+    row = (
+        db.query(Task.id, Task.title, Task.description, Task.completed,
+                 Task.owner_id, User.username, Task.created_at, Task.updated_at)
+        .join(User, Task.owner_id == User.id)
+        .filter(Task.id == task_id)
+        .first()
+    )
+    if not row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
-    if task.owner_id != current_user.id and current_user.role != "admin":
+    if row.owner_id != current_user.id and current_user.role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your task")
-    return task
+    return {
+        "id": row.id,
+        "title": row.title,
+        "description": row.description,
+        "completed": row.completed,
+        "owner_id": row.owner_id,
+        "owner_name": row.username,
+        "created_at": row.created_at,
+        "updated_at": row.updated_at,
+    }
 
 
 @router.put("/{task_id}", response_model=TaskResponse)
@@ -62,7 +106,17 @@ def update_task(request: Request, task_id: int, payload: TaskUpdate, db: Session
 
     db.commit()
     db.refresh(task)
-    return task
+    owner = db.query(User).filter(User.id == task.owner_id).first()
+    return {
+        "id": task.id,
+        "title": task.title,
+        "description": task.description,
+        "completed": task.completed,
+        "owner_id": task.owner_id,
+        "owner_name": owner.username,
+        "created_at": task.created_at,
+        "updated_at": task.updated_at,
+    }
 
 
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)

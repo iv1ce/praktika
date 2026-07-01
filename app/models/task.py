@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, func
+from sqlalchemy.orm import relationship
 
 from app.database import Base
 
@@ -11,5 +12,11 @@ class Task(Base):
     description = Column(Text, default="")
     completed = Column(Boolean, default=False)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    owner = relationship("User", lazy="joined")
+
+    @property
+    def owner_name(self):
+        return self.owner.username if self.owner else None
