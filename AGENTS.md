@@ -1,6 +1,11 @@
 # praktika — Защищённая веб-платформа
 
-
+## Запуск
+```bash
+cd C:\Users\bosbe\Downloads\praktika
+.\venv\Scripts\activate
+python -m app.main          # http://127.0.0.1:8000
+```
 
 ## Стек
 - FastAPI + Uvicorn, SQLAlchemy (SQLite / PostgreSQL)
@@ -35,27 +40,30 @@
 
 ### Безопасность
 - [x] Пароли bcrypt (passlib)
-- [x] JWT-токены с expiry
+- [x] JWT-токены с expiry (HS256, 60 мин)
+- [x] RBAC (user/admin) — проверка на каждом эндпоинте
 - [x] Rate limiting (SlowAPI) на каждый эндпоинт
+- [x] Brute-force lockout: 5 неудачных → блок 15 мин (423 Locked)
+- [x] Security headers: CSP, X-Frame-Options: DENY, HSTS, X-Content-Type-Options: nosniff
+- [x] Self-demote защита: admin не может снять себе роль
+- [x] Self-block защита: admin не может заблокировать себя
+- [x] Сброс brute-force счётчика при разблокировке админом
+- [x] Поле locked_until в UserResponse (видно админу)
 - [x] Аудит запросов в audit.log (USER, IP, METHOD, PATH, STATUS)
 - [x] Global exception handler (500 → JSON, лог ошибки)
 - [x] Rollback БД при ошибках
 - [x] Защита от SQL-инъекций (SQLAlchemy ORM)
-- [x] Защита от XSS (экранирование на фронтенде)
+- [x] Защита от XSS (CSP + экранирование на фронтенде)
+- [x] Валидация username (regex), email (EmailStr), password (мин 8)
+- [x] Авто-миграция новых колонок БД при запуске
+- [x] quote_plus для пароля БД (спецсимволы)
+- [x] CSP без unsafe-inline для скриптов (все onclick вынесены в JS)
 
 ### Инфраструктура
 - [x] PostgreSQL/SQLite переключение через DB_HOST в .env
-- [x] База на PostgreSQL (pgAdmin)
 - [x] REST API с JSON
 - [x] Авто-документация Swagger (/docs) + ReDoc (/redoc)
 - [x] Кнопка API Docs в навигации на сайте
-
-### Безопасность (добавлено 02.07.2026)
-- [x] Brute-force lockout: 5 неудачных попыток → блокировка 15 мин (423 Locked)
-- [x] Security headers: CSP, X-Frame-Options: DENY, HSTS, X-Content-Type-Options: nosniff
-- [x] Self-demote защита: admin не может снять себе роль
-- [x] Сброс brute-force счётчика при разблокировке админом
-- [x] Поле locked_until в UserResponse (видно админу)
 
 ### Прочее
 - [x] Удалён мусор (src/main.py, __pycache__)
