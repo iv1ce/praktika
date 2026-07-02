@@ -467,5 +467,6 @@ if (token) {
   loadApp().catch(() => {
     token = null;
     localStorage.removeItem('token');
+    document.getElementById('page-auth').style.display = 'block';
   });
 }
