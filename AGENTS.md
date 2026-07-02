@@ -1,10 +1,6 @@
 # praktika — Защищённая веб-платформа
 
-## Запуск
-```bash
-cd D:\praktika
-python -m app.main          # http://127.0.0.1:8000
-```
+
 
 ## Стек
 - FastAPI + Uvicorn, SQLAlchemy (SQLite / PostgreSQL)
