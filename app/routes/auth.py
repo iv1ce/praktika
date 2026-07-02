@@ -72,9 +72,10 @@ def login(request: Request, payload: UserLogin, db: Session = Depends(get_db)):
         user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
         if user.failed_login_attempts >= 5:
             user.locked_until = datetime.utcnow() + timedelta(minutes=15)
+            client_ip = request.client.host if request.client else "unknown"
             logger.warning(
                 "Brute-force lockout: user=%s locked for 15m (IP=%s)",
-                user.username, request.client.host,
+                user.username, client_ip,
             )
         db.commit()
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
