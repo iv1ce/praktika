@@ -275,16 +275,16 @@ function loadTasks() {
   const list = document.getElementById('task-list');
   request('GET', '/tasks').then(tasks => {
     list.innerHTML = tasks.map(task => `
-      <li id="task-${task.id}" class="${task.completed ? 'completed' : ''}">
+      <li id="task-${task.id}" class="${task.completed ? 'completed' : ''}" data-id="${task.id}">
         <div class="task-info">
           <strong>${escapeHtml(task.title)}</strong>
           <span>${escapeHtml(task.description)}</span>
           ${currentUser && currentUser.role === 'admin' ? `<small class="owner">— ${escapeHtml(task.owner_name)}</small>` : ''}
         </div>
         <div class="task-actions">
-          <button onclick="toggleTask(${task.id}, ${!task.completed})">${task.completed ? t('tasks.undo') : t('tasks.done')}</button>
-          <button onclick="editTask(${task.id})">${t('tasks.edit')}</button>
-          <button class="delete" onclick="deleteTask(${task.id})">${t('tasks.delete')}</button>
+          <button data-action="toggle" data-completed="${!task.completed}">${task.completed ? t('tasks.undo') : t('tasks.done')}</button>
+          <button data-action="edit">${t('tasks.edit')}</button>
+          <button class="delete" data-action="delete">${t('tasks.delete')}</button>
         </div>
       </li>
     `).join('');
@@ -304,8 +304,8 @@ function editTask(id) {
       <input type="text" id="edit-desc-${id}" value="${escapeHtml(desc)}" placeholder="${t('tasks.desc_ph')}">
     </div>
     <div class="task-actions">
-      <button onclick="saveTask(${id})">${t('tasks.save')}</button>
-      <button onclick="loadTasks()">${t('tasks.cancel')}</button>
+      <button data-action="save" data-id="${id}">${t('tasks.save')}</button>
+      <button data-action="cancel">${t('tasks.cancel')}</button>
     </div>
   `;
 }
@@ -362,12 +362,12 @@ function loadAdmin() {
   const body = document.getElementById('admin-body');
   request('GET', '/users').then(users => {
     body.innerHTML = users.map(u => `
-      <tr>
+      <tr data-id="${u.id}">
         <td>${u.id}</td>
         <td>${escapeHtml(u.username)}</td>
         <td>${escapeHtml(u.email)}</td>
         <td>
-          <select onchange="changeRole(${u.id}, this.value)" ${u.id === currentUser.id ? 'disabled' : ''}>
+          <select data-action="role" ${u.id === currentUser.id ? 'disabled' : ''}>
             <option value="user" ${u.role === 'user' ? 'selected' : ''}>user</option>
             <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>admin</option>
           </select>
@@ -375,10 +375,10 @@ function loadAdmin() {
         <td>${u.last_login ? new Date(u.last_login).toLocaleString() : t('admin.never')}</td>
         <td>${u.is_active ? t('admin.active') : t('admin.blocked')}</td>
         <td>
-          <button onclick="toggleUserStatus(${u.id}, ${!u.is_active})" ${u.id === currentUser.id ? 'disabled' : ''}>
+          <button data-action="status" data-active="${!u.is_active}" ${u.id === currentUser.id ? 'disabled' : ''}>
             ${u.is_active ? t('admin.block') : t('admin.unblock')}
           </button>
-          <button class="delete" onclick="deleteUser(${u.id})" ${u.id === currentUser.id ? 'disabled' : ''}>${t('admin.delete')}</button>
+          <button class="delete" data-action="delete" ${u.id === currentUser.id ? 'disabled' : ''}>${t('admin.delete')}</button>
         </td>
       </tr>
     `).join('');
@@ -460,6 +460,54 @@ function escapeHtml(str) {
   div.textContent = str;
   return div.innerHTML;
 }
+
+// Event bindings (вместо inline onclick/onsubmit)
+document.getElementById('nav-lang').addEventListener('click', toggleLang);
+document.getElementById('nav-tasks').addEventListener('click', showTasks);
+document.getElementById('nav-profile').addEventListener('click', showProfile);
+document.getElementById('nav-admin').addEventListener('click', showAdmin);
+document.getElementById('nav-api').addEventListener('click', () => window.open('/docs', '_blank'));
+document.getElementById('nav-logout').addEventListener('click', logout);
+document.getElementById('auth-form').addEventListener('submit', handleAuth);
+document.getElementById('auth-toggle').addEventListener('click', e => { e.preventDefault(); toggleAuth(); });
+document.getElementById('task-form').addEventListener('submit', handleTaskSubmit);
+document.getElementById('profile-form').addEventListener('submit', handleProfileUpdate);
+
+// Делегирование для динамических кнопок в списке задач
+document.getElementById('task-list').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const li = btn.closest('[data-id]');
+  const id = Number(li?.dataset.id);
+  if (!id) return;
+  const action = btn.dataset.action;
+  if (action === 'toggle') toggleTask(id, btn.dataset.completed === 'true');
+  else if (action === 'edit') editTask(id);
+  else if (action === 'delete') deleteTask(id);
+  else if (action === 'save') saveTask(id);
+  else if (action === 'cancel') loadTasks();
+});
+
+// Делегирование для админки
+document.getElementById('admin-body').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const tr = btn.closest('tr[data-id]');
+  const id = Number(tr?.dataset.id);
+  if (!id) return;
+  const action = btn.dataset.action;
+  if (action === 'status') toggleUserStatus(id, btn.dataset.active === 'true');
+  else if (action === 'delete') deleteUser(id);
+});
+
+document.getElementById('admin-body').addEventListener('change', e => {
+  const sel = e.target.closest('select[data-action]');
+  if (!sel) return;
+  const tr = sel.closest('tr[data-id]');
+  const id = Number(tr?.dataset.id);
+  if (!id) return;
+  changeRole(id, sel.value);
+});
 
 // Init
 applyLang();

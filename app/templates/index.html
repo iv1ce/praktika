@@ -13,12 +13,12 @@
         <header>
             <h1>Практика ИБС</h1>
             <nav id="nav">
-                <button onclick="toggleLang()" id="nav-lang">EN</button>
-                <button onclick="showTasks()" id="nav-tasks" style="display:none">Задачи</button>
-                <button onclick="showProfile()" id="nav-profile" style="display:none">Профиль</button>
-                <button onclick="showAdmin()" id="nav-admin" style="display:none">Админ</button>
-                <button onclick="window.open('/docs', '_blank')" id="nav-api" style="display:none">API Docs</button>
-                <button onclick="logout()" id="nav-logout" style="display:none">Выйти</button>
+                <button id="nav-lang">EN</button>
+                <button id="nav-tasks" style="display:none">Задачи</button>
+                <button id="nav-profile" style="display:none">Профиль</button>
+                <button id="nav-admin" style="display:none">Админ</button>
+                <button id="nav-api" style="display:none">API Docs</button>
+                <button id="nav-logout" style="display:none">Выйти</button>
             </nav>
         </header>
 
@@ -26,7 +26,7 @@
             <section id="page-auth">
                 <div class="auth-form">
                     <h2 id="auth-title">Вход</h2>
-                    <form id="auth-form" onsubmit="return handleAuth(event)">
+                    <form id="auth-form">
                         <input type="hidden" id="auth-mode" value="login">
                         <input type="text" id="auth-username" placeholder="Логин" required>
                         <input type="email" id="auth-email" placeholder="Почта" style="display:none">
@@ -34,7 +34,7 @@
                         <button type="submit" id="auth-submit">Войти</button>
                     </form>
                     <p>
-                        <a href="#" onclick="toggleAuth()" id="auth-toggle">Зарегистрироваться</a>
+                        <a href="#" id="auth-toggle">Зарегистрироваться</a>
                     </p>
                     <p id="auth-error" class="error"></p>
                 </div>
@@ -42,7 +42,7 @@
 
             <section id="page-tasks" style="display:none">
                 <h2>Мои задачи</h2>
-                <form id="task-form" onsubmit="return handleTaskSubmit(event)">
+                <form id="task-form">
                     <input type="text" id="task-title" placeholder="Название задачи" required>
                     <input type="text" id="task-desc" placeholder="Описание">
                     <button type="submit">Добавить</button>
@@ -53,7 +53,7 @@
 
             <section id="page-profile" style="display:none">
                 <h2>Настройки профиля</h2>
-                <form id="profile-form" onsubmit="return handleProfileUpdate(event)">
+                <form id="profile-form">
                     <input type="email" id="profile-email" placeholder="Новая почта (оставьте пустым)">
                     <input type="password" id="profile-old-pw" placeholder="Текущий пароль">
                     <input type="password" id="profile-new-pw" placeholder="Новый пароль (оставьте пустым)">
