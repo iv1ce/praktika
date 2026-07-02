@@ -25,9 +25,6 @@ const i18n = {
     'auth.error.failed': 'Ошибка запроса',
     'tasks.title': 'Мои задачи',
     'tasks.add': 'Добавить',
-    'tasks.created': 'Задача создана!',
-    'tasks.updated': 'Задача обновлена!',
-    'tasks.deleted': 'Задача удалена',
     'tasks.title_ph': 'Название задачи',
     'tasks.desc_ph': 'Описание',
     'tasks.done': 'Готово',
@@ -36,10 +33,6 @@ const i18n = {
     'tasks.edit': 'Редактировать',
     'tasks.save': 'Сохранить',
     'tasks.cancel': 'Отмена',
-    'tasks.done_toast': 'Задача выполнена',
-    'tasks.undo_toast': 'Задача возвращена',
-    'tasks.empty': 'Задач пока нет',
-    'tasks.empty_hint': 'Создайте первую задачу через форму выше',
     'profile.title': 'Настройки профиля',
     'profile.email': 'Новая почта (оставьте пустым, если не меняете)',
     'profile.old_pw': 'Текущий пароль',
@@ -84,9 +77,6 @@ const i18n = {
     'auth.error.failed': 'Request failed',
     'tasks.title': 'My Tasks',
     'tasks.add': 'Add Task',
-    'tasks.created': 'Task created!',
-    'tasks.updated': 'Task updated!',
-    'tasks.deleted': 'Task deleted',
     'tasks.title_ph': 'Task title',
     'tasks.desc_ph': 'Description',
     'tasks.done': 'Done',
@@ -95,10 +85,6 @@ const i18n = {
     'tasks.edit': 'Edit',
     'tasks.save': 'Save',
     'tasks.cancel': 'Cancel',
-    'tasks.done_toast': 'Task completed',
-    'tasks.undo_toast': 'Task reopened',
-    'tasks.empty': 'No tasks yet',
-    'tasks.empty_hint': 'Create your first task using the form above',
     'profile.title': 'Profile Settings',
     'profile.email': 'New email (leave blank to keep)',
     'profile.old_pw': 'Current password',
@@ -126,18 +112,6 @@ const i18n = {
 
 function t(key) {
   return i18n[lang][key] || key;
-}
-
-function showToast(msg, type) {
-  const container = document.getElementById('toast');
-  const el = document.createElement('div');
-  el.className = `toast toast--${type || 'info'}`;
-  el.textContent = msg;
-  container.appendChild(el);
-  setTimeout(() => {
-    el.classList.add('toast--out');
-    el.addEventListener('animationend', () => el.remove());
-  }, 3000);
 }
 
 function toggleLang() {
@@ -266,7 +240,8 @@ async function handleAuth(e) {
     if (mode === 'register') {
       const email = document.getElementById('auth-email').value;
       await request('POST', '/auth/register', { username, email, password });
-      showToast(t('auth.success'), 'success');
+      errorEl.textContent = t('auth.success');
+      errorEl.className = 'success';
       toggleAuth();
       return;
     }
@@ -299,19 +274,6 @@ async function loadApp() {
 function loadTasks() {
   const list = document.getElementById('task-list');
   request('GET', '/tasks').then(tasks => {
-    if (tasks.length === 0) {
-      list.innerHTML = `
-        <div class="empty-state">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
-            <rect x="9" y="3" width="6" height="4" rx="1"/>
-            <path d="M9 14l2 2 4-4"/>
-          </svg>
-          <h3>${t('tasks.empty')}</h3>
-          <p>${t('tasks.empty_hint')}</p>
-        </div>`;
-      return;
-    }
     list.innerHTML = tasks.map(task => `
       <li id="task-${task.id}" class="${task.completed ? 'completed' : ''}">
         <div class="task-info">
@@ -354,9 +316,13 @@ async function saveTask(id) {
   try {
     await request('PUT', `/tasks/${id}`, { title, description: desc });
     loadTasks();
-    showToast(t('tasks.updated'), 'success');
   } catch (err) {
-    showToast(err.message, 'error');
+    const li = document.getElementById(`task-${id}`);
+    const actions = li.querySelector('.task-actions');
+    const errEl = document.createElement('p');
+    errEl.className = 'error';
+    errEl.textContent = err.message;
+    actions.after(errEl);
   }
 }
 
@@ -373,7 +339,6 @@ async function handleTaskSubmit(e) {
     document.getElementById('task-title').value = '';
     document.getElementById('task-desc').value = '';
     loadTasks();
-    showToast(t('tasks.created'), 'success');
   } catch (err) {
     errorEl.textContent = err.message;
     errorEl.className = 'error';
@@ -385,13 +350,11 @@ async function handleTaskSubmit(e) {
 async function toggleTask(id, completed) {
   await request('PUT', `/tasks/${id}`, { completed });
   loadTasks();
-  showToast(completed ? t('tasks.done_toast') : t('tasks.undo_toast'), 'info');
 }
 
 async function deleteTask(id) {
   await request('DELETE', `/tasks/${id}`);
   loadTasks();
-  showToast(t('tasks.deleted'), 'info');
 }
 
 function loadAdmin() {
@@ -428,19 +391,16 @@ async function deleteUser(id) {
   if (!confirm(t('admin.delete_confirm'))) return;
   await request('DELETE', `/users/${id}`);
   loadAdmin();
-  showToast('User deleted', 'info');
 }
 
 async function toggleUserStatus(id, isActive) {
   await request('PATCH', `/users/${id}/status`, { is_active: isActive });
   loadAdmin();
-  showToast(isActive ? 'User unblocked' : 'User blocked', 'info');
 }
 
 async function changeRole(id, role) {
   await request('PATCH', `/users/${id}/role`, { role });
   loadAdmin();
-  showToast(`Role changed to ${role}`, 'info');
 }
 
 async function handleProfileUpdate(e) {
@@ -471,7 +431,8 @@ async function handleProfileUpdate(e) {
   try {
     await request('PUT', '/users/me', body);
     currentUser = await request('GET', '/users/me');
-    showToast(t('profile.updated'), 'success');
+    errorEl.textContent = t('profile.updated');
+    errorEl.className = 'success';
     document.getElementById('profile-email').value = '';
     document.getElementById('profile-old-pw').value = '';
     document.getElementById('profile-new-pw').value = '';
