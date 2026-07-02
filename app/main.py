@@ -13,6 +13,7 @@ from app.database import Base, engine
 from app.limiter import limiter
 from app.routes import auth, users, tasks
 from app.middleware.audit import audit_middleware
+from app.middleware.headers import security_headers_middleware
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -45,6 +46,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 app.middleware("http")(audit_middleware)
+app.middleware("http")(security_headers_middleware)
 
 app.include_router(auth.router)
 app.include_router(users.router)

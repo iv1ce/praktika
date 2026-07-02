@@ -35,6 +35,7 @@ class UserResponse(BaseModel):
     role: str
     is_active: bool
     last_login: datetime | None = None
+    locked_until: datetime | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

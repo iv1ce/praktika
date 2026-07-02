@@ -54,6 +54,13 @@ python -m app.main          # http://127.0.0.1:8000
 - [x] Авто-документация Swagger (/docs) + ReDoc (/redoc)
 - [x] Кнопка API Docs в навигации на сайте
 
+### Безопасность (добавлено 02.07.2026)
+- [x] Brute-force lockout: 5 неудачных попыток → блокировка 15 мин (423 Locked)
+- [x] Security headers: CSP, X-Frame-Options: DENY, HSTS, X-Content-Type-Options: nosniff
+- [x] Self-demote защита: admin не может снять себе роль
+- [x] Сброс brute-force счётчика при разблокировке админом
+- [x] Поле locked_until в UserResponse (видно админу)
+
 ### Прочее
 - [x] Удалён мусор (src/main.py, __pycache__)
 - [x] Анимации кнопок (hover glow, click scale, loading spinner, fadeSlideIn)

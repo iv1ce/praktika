@@ -1,3 +1,5 @@
+from urllib.parse import quote_plus
+
 from pydantic_settings import BaseSettings
 from pathlib import Path
 
@@ -19,7 +21,8 @@ class Settings(BaseSettings):
     @property
     def db_url(self) -> str:
         if self.DB_HOST:
-            return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+            pw = quote_plus(self.DB_PASSWORD)
+            return f"postgresql://{self.DB_USER}:{pw}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
         return self.DATABASE_URL
 
 

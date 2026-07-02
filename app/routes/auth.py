@@ -1,4 +1,5 @@
-from datetime import datetime
+import logging
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
@@ -8,6 +9,8 @@ from app.limiter import limiter
 from app.models.user import User
 from app.schemas import UserCreate, UserLogin, TokenResponse, UserResponse
 from app.services.auth import hash_password, verify_password, create_access_token
+
+logger = logging.getLogger("uvicorn.error")
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -48,11 +51,40 @@ def register(request: Request, payload: UserCreate, db: Session = Depends(get_db
 def login(request: Request, payload: UserLogin, db: Session = Depends(get_db)):
     """Аутентификация по логину и паролю. Возвращает Bearer-токен (действителен 60 минут)."""
     user = db.query(User).filter(User.username == payload.username).first()
-    if not user or not verify_password(payload.password, user.hashed_password):
+    if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    # Lockout check — временная блокировка после N неудачных попыток
+    if user.locked_until and user.locked_until > datetime.utcnow():
+        remaining = int((user.locked_until - datetime.utcnow()).total_seconds() // 60)
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail=f"Account locked due to too many failed attempts. Try again in {remaining} minute(s)",
+        )
+
+    # Автосброс блокировки по истечении времени
+    if user.locked_until and user.locked_until <= datetime.utcnow():
+        user.failed_login_attempts = 0
+        user.locked_until = None
+        db.commit()
+
+    if not verify_password(payload.password, user.hashed_password):
+        user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
+        if user.failed_login_attempts >= 5:
+            user.locked_until = datetime.utcnow() + timedelta(minutes=15)
+            logger.warning(
+                "Brute-force lockout: user=%s locked for 15m (IP=%s)",
+                user.username, request.client.host,
+            )
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is blocked")
 
+    # Успешный вход — сбрасываем счётчик
+    user.failed_login_attempts = 0
+    user.locked_until = None
     user.last_login = datetime.utcnow()
     db.commit()
 

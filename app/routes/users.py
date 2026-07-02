@@ -86,6 +86,9 @@ def toggle_user_status(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot block yourself")
 
     user.is_active = payload.is_active
+    if payload.is_active:
+        user.failed_login_attempts = 0
+        user.locked_until = None
     db.commit()
     db.refresh(user)
     return user
@@ -111,6 +114,8 @@ def change_user_role(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if user.id == admin.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot change your own role")
 
     user.role = payload.role
     db.commit()
