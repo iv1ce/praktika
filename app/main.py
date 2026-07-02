@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from sqlalchemy import inspect, text
 
 from app.config import BASE_DIR
 from app.database import Base, engine
@@ -18,9 +19,25 @@ from app.middleware.headers import security_headers_middleware
 logger = logging.getLogger("uvicorn.error")
 
 
+def _migrate():
+    inspector = inspect(engine)
+    columns = {c["name"] for c in inspector.get_columns("users")}
+    is_pg = "postgresql" in str(engine.url)
+    additions = {
+        "failed_login_attempts": "INTEGER DEFAULT 0",
+        "locked_until": "TIMESTAMP" if is_pg else "DATETIME",
+    }
+    for col, dtype in additions.items():
+        if col not in columns:
+            with engine.connect() as conn:
+                conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} {dtype}"))
+                conn.commit()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    _migrate()
     yield
 
 
