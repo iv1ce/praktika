@@ -17,6 +17,7 @@ async def security_headers_middleware(request: Request, call_next):
         f"style-src {style_src}; "
         f"img-src {img_src}; "
         f"font-src 'self' https://fonts.gstatic.com; "
+        f"connect-src 'self' https://cdn.jsdelivr.net; "
         f"base-uri 'self'; "
         f"form-action 'self'"
     )
