@@ -26,6 +26,7 @@ def _migrate():
     additions = {
         "failed_login_attempts": "INTEGER DEFAULT 0",
         "locked_until": "TIMESTAMP" if is_pg else "DATETIME",
+        "last_activity": "TIMESTAMP" if is_pg else "DATETIME",
     }
     for col, dtype in additions.items():
         if col not in columns:

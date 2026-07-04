@@ -28,6 +28,8 @@ const i18n = {
     'tasks.title_ph': 'Название задачи',
     'tasks.desc_ph': 'Описание',
     'tasks.done': 'Готово',
+    'tasks.empty_title': 'Задач пока нет',
+    'tasks.empty_desc': 'Создайте первую задачу прямо сейчас!',
     'tasks.undo': 'Отменить',
     'tasks.delete': 'Удалить',
     'tasks.edit': 'Редактировать',
@@ -50,6 +52,7 @@ const i18n = {
     'admin.actions': 'Действия',
     'admin.active': 'Активен',
     'admin.blocked': 'Заблокирован',
+    'admin.offline': 'Не в сети',
     'admin.never': 'Не заходил',
     'admin.block': 'Заблокировать',
     'admin.unblock': 'Разблокировать',
@@ -80,6 +83,8 @@ const i18n = {
     'tasks.title_ph': 'Task title',
     'tasks.desc_ph': 'Description',
     'tasks.done': 'Done',
+    'tasks.empty_title': 'No tasks yet',
+    'tasks.empty_desc': 'Create your first task now!',
     'tasks.undo': 'Undo',
     'tasks.delete': 'Delete',
     'tasks.edit': 'Edit',
@@ -102,6 +107,7 @@ const i18n = {
     'admin.actions': 'Actions',
     'admin.active': 'Active',
     'admin.blocked': 'Blocked',
+    'admin.offline': 'Offline',
     'admin.never': 'Never logged in',
     'admin.block': 'Block',
     'admin.unblock': 'Unblock',
@@ -130,10 +136,12 @@ function applyLang() {
     document.getElementById('nav-logout').textContent = t('nav.logout');
   }
   updateAuthUI();
-  document.querySelector('#page-tasks > h2').textContent = t('tasks.title');
+  document.querySelector('.tasks-header h2').textContent = t('tasks.title');
   document.getElementById('task-title').placeholder = t('tasks.title_ph');
   document.getElementById('task-desc').placeholder = t('tasks.desc_ph');
   document.querySelector('#task-form button').textContent = t('tasks.add');
+  document.getElementById('empty-title').textContent = t('tasks.empty_title');
+  document.getElementById('empty-desc').textContent = t('tasks.empty_desc');
 
   document.querySelector('#page-admin > h2').textContent = t('admin.title');
   updateAdminTableHeaders();
@@ -261,19 +269,38 @@ async function loadApp() {
   document.getElementById('nav-profile').style.display = 'inline';
   document.getElementById('nav-api').style.display = 'inline';
   document.getElementById('nav-logout').style.display = 'inline';
+  document.getElementById('online-dot').style.display = 'inline-block';
   applyLang();
 
   currentUser = await request('GET', '/users/me');
   if (currentUser.role === 'admin') {
     document.getElementById('nav-admin').style.display = 'inline';
   }
+  document.getElementById('online-dot').style.background = 'var(--success)';
+  document.getElementById('online-dot').style.boxShadow = '0 0 8px var(--success)';
+  startHeartbeat();
   showTasks();
   loadAdmin();
 }
 
 function loadTasks() {
   const list = document.getElementById('task-list');
+  const empty = document.getElementById('empty-state');
+  const progressText = document.getElementById('progress-text');
+  const progressFill = document.getElementById('progress-fill');
   request('GET', '/tasks').then(tasks => {
+    const myTasks = currentUser?.role === 'admin' ? tasks.filter(t => t.owner_id === currentUser.id) : tasks;
+    const total = myTasks.length;
+    const done = myTasks.filter(t => t.completed).length;
+    progressText.textContent = `${done} / ${total}`;
+    progressFill.style.width = total > 0 ? `${(done / total) * 100}%` : '0%';
+    if (total === 0) {
+      list.style.display = 'none';
+      empty.style.display = 'block';
+      return;
+    }
+    list.style.display = '';
+    empty.style.display = 'none';
     list.innerHTML = tasks.map(task => `
       <li id="task-${task.id}" class="${task.completed ? 'completed' : ''}" data-id="${task.id}">
         <div class="task-info">
@@ -289,6 +316,8 @@ function loadTasks() {
       </li>
     `).join('');
   }).catch(err => {
+    list.style.display = '';
+    empty.style.display = 'none';
     list.innerHTML = `<li class="error" style="text-align:center;padding:1rem">${escapeHtml(err.message)}</li>`;
   });
 }
@@ -373,7 +402,7 @@ function loadAdmin() {
           </select>
         </td>
         <td>${u.last_login ? new Date(u.last_login).toLocaleString() : t('admin.never')}</td>
-        <td>${u.is_active ? t('admin.active') : t('admin.blocked')}</td>
+        <td>${statusBadge(u)}</td>
         <td>
           <button data-action="status" data-active="${!u.is_active}" ${u.id === currentUser.id ? 'disabled' : ''}>
             ${u.is_active ? t('admin.block') : t('admin.unblock')}
@@ -452,6 +481,7 @@ function logout() {
   document.getElementById('nav-admin').style.display = 'none';
   document.getElementById('nav-api').style.display = 'none';
   document.getElementById('nav-logout').style.display = 'none';
+  document.getElementById('online-dot').style.display = 'none';
   document.getElementById('page-auth').style.display = 'block';
 }
 
@@ -459,6 +489,40 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+function isOnline(u) {
+  if (!u.last_activity) return false;
+  const ts = u.last_activity.includes('T') && !u.last_activity.endsWith('Z') && !u.last_activity.includes('+')
+    ? u.last_activity + 'Z' : u.last_activity;
+  const diff = Date.now() - new Date(ts).getTime();
+  return diff < 5 * 60 * 1000;
+}
+
+function statusBadge(u) {
+  if (!u.is_active) {
+    return `<span class="status-badge status-blocked">${t('admin.blocked')}</span>`;
+  }
+  if (isOnline(u)) {
+    return `<span class="status-badge status-active">${t('admin.active')}</span>`;
+  }
+  return `<span class="status-badge status-offline">${t('admin.offline')}</span>`;
+}
+
+function startHeartbeat() {
+  setInterval(() => {
+    request('GET', '/users/me').then(u => {
+      currentUser = u;
+      const dot = document.getElementById('online-dot');
+      if (isOnline(u)) {
+        dot.style.background = 'var(--success)';
+        dot.style.boxShadow = '0 0 8px var(--success)';
+      } else {
+        dot.style.background = 'var(--text-muted)';
+        dot.style.boxShadow = 'none';
+      }
+    }).catch(() => {});
+  }, 2 * 60 * 1000);
 }
 
 // Event bindings (вместо inline onclick/onsubmit)

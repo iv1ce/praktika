@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -21,6 +23,9 @@ def get_current_user(
     user = db.query(User).filter(User.id == int(payload.get("sub"))).first()
     if user is None or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
+
+    user.last_activity = datetime.now(timezone.utc)
+    db.commit()
 
     return user
 

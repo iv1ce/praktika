@@ -11,7 +11,10 @@
 <body>
     <div id="app">
         <header>
-            <h1>Практика ИБС</h1>
+            <div class="header-left">
+                <h1>Практика ИБС</h1>
+                <span id="online-dot" class="online-dot" style="display:none"></span>
+            </div>
             <nav id="nav">
                 <button id="nav-lang">EN</button>
                 <button id="nav-tasks" style="display:none">Задачи</button>
@@ -41,7 +44,13 @@
             </section>
 
             <section id="page-tasks" style="display:none">
-                <h2>Мои задачи</h2>
+                <div class="tasks-header">
+                    <h2>Мои задачи</h2>
+                    <div id="task-progress" class="task-progress">
+                        <span id="progress-text">0 / 0</span>
+                        <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+                    </div>
+                </div>
                 <form id="task-form">
                     <input type="text" id="task-title" placeholder="Название задачи" required>
                     <input type="text" id="task-desc" placeholder="Описание">
@@ -49,6 +58,19 @@
                     <p id="task-error" class="error"></p>
                 </form>
                 <ul id="task-list"></ul>
+                <div id="empty-state" class="empty-state" style="display:none">
+                    <svg viewBox="0 0 80 80" fill="none">
+                        <rect x="10" y="18" width="60" height="50" rx="8" stroke="currentColor" stroke-width="2" fill="none"/>
+                        <line x1="20" y1="32" x2="60" y2="32" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="20" y1="42" x2="50" y2="42" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="20" y1="52" x2="44" y2="52" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="64" cy="56" r="14" fill="var(--surface)" stroke="currentColor" stroke-width="2"/>
+                        <line x1="64" y1="50" x2="64" y2="62" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="58" y1="56" x2="70" y2="56" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <h3 id="empty-title">Задач пока нет</h3>
+                    <p id="empty-desc">Создайте первую задачу прямо сейчас!</p>
+                </div>
             </section>
 
             <section id="page-profile" style="display:none">

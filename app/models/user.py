@@ -13,6 +13,7 @@ class User(Base):
     role = Column(String(20), default="user")
     is_active = Column(Boolean, default=True)
     last_login = Column(DateTime, nullable=True)
+    last_activity = Column(DateTime, nullable=True)
     failed_login_attempts = Column(Integer, default=0)
     locked_until = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
