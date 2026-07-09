@@ -19,6 +19,7 @@ Thumbs.db
 
 # Project
 praktika.db
+test.db
 .env
 audit.log
 *.log

@@ -5,10 +5,33 @@
 ## Быстрый старт
 
 ```bash
+# 1. Создать виртуальное окружение (один раз)
+python -m venv venv
+
+# 2. Активировать
+# Windows:
+venv\Scripts\activate
+# Linux/Mac:
+# source venv/bin/activate
+
+# 3. Установить зависимости
 pip install -r requirements.txt
-python setup.py          # настройка БД (PostgreSQL или SQLite)
+
+# 4. Настроить БД (PostgreSQL или SQLite)
+python setup.py
+
+# 5. Запустить
 python -m app.main       # http://127.0.0.1:8000
 ```
+
+## Тесты
+
+```bash
+# Активировать venv (см. выше), затем:
+pytest tests/ -v
+```
+
+Тесты используют отдельную SQLite БД (`test.db`), не трогая основную. 44 теста покрывают регистрацию, логин, brute-force, CRUD задач, админку и валидацию.
 
 ## Возможности
 
