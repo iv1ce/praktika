@@ -73,7 +73,7 @@ python -m app.main          # http://127.0.0.1:8000
 - [x] Обработка ошибок в handleTaskSubmit (показывает под формой)
 - [x] Документация API (summary, description во всех эндпоинтах → Swagger)
 - [x] Руководство пользователя (GUIDE.md)
-- [ ] Тесты
+- [x] Тесты (pytest, 44 теста: auth, tasks, users, validation)
 
 ## Rate limits
 | Эндпоинт | Лимит |

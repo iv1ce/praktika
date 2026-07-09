@@ -46,6 +46,13 @@ class TaskCreate(BaseModel):
     title: str
     description: str = ""
 
+    @field_validator("title")
+    @classmethod
+    def validate_title(cls, v):
+        if not v or not v.strip():
+            raise ValueError("Title must not be empty")
+        return v
+
 
 class TaskUpdate(BaseModel):
     title: str | None = None
